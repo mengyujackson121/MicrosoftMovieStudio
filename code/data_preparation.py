@@ -11,34 +11,104 @@ There can be an unlimited amount of support functions.
 Each support function should have an informative name and return the partially cleaned bit of the dataset.
 """
 import pandas as pd
+import numpy as np
 
-def support_function_one(example):
-    """This one might read in the data from imdb and clean it"""
-    return example
 
-def support_function_two(example):
-    """This function might read in and clean a different data source"""
-    return example
+def clean_bom_title(bom):
+    bom["cleaned_title"] = bom['title'].str.replace(r'(\(\d{4}\))', '')
+    bom["cleaned_title"] = bom['cleaned_title'].str.replace(r'(\(\d{4} re-release\))', '')
+    bom["cleaned_title"] = bom['cleaned_title'].str.replace(r'(\(\d{4} re-issue\))', '')
+    bom["cleaned_title"] = bom['cleaned_title'].str.replace(r'(\(\d{4} Restoration\))', '')
+    bom["cleaned_title"] = bom["cleaned_title"].str.strip()
+    return bom
 
-def support_function_three(example):
-    """This one might merge the above two sources and create a few new variables"""
-    return example
 
-def full_clean():
-    """
-    This is the one function called that will run all the support functions.
-    Assumption: 
-        - Your data files will be saved in a data folder and named "dirty_data.csv"
-        - OR you might read directly from a few urls
-        - this code is guidance, not rules
+def clean_bom_gross(bom):
+    bom["foreign_gross"] = bom["foreign_gross"].str.replace(',', '')
+    bom['domestic_gross'] = bom['domestic_gross'].fillna(0)
+    bom['foreign_gross'] = bom['foreign_gross'].fillna(0)
+    bom['foreign_gross'] = bom['foreign_gross'].astype(float)
+    bom['domestic_gross'] = bom['domestic_gross'].astype(int)
+    bom['foreign_gross'] = bom['foreign_gross'].astype(int)
+    bom['total_gross'] = bom['domestic_gross'] + bom['foreign_gross']
+    bom = bom.drop(columns = ['domestic_gross', 'foreign_gross', 'title', 'total_gross'])
+    return bom
 
-    :return: cleaned dataset to be passed to hypothesis testing and visualization modules.
-    """
-    dirty_data = pd.read_csv("./data/dirty_data.csv")
-
-    cleaning_data1 = support_function_one(dirty_data)
-    cleaning_data2 = support_function_two(cleaning_data1)
-    cleaned_data= support_function_three(cleaning_data2)
-    cleaned_data.to_csv('./data/cleaned_for_testing.csv')
     
+def clean_bom(bom):
+    bom = clean_bom_title(bom)
+    bom = clean_bom_gross(bom)
+    return bom
+
+    
+def clean_tmdb_movies(tmdb_movies):
+    #tmdb_movies = tmdb_movies.drop(columns = ['Unnamed: 0', 'genre_ids','original_language', 'original_title', 'release_date','id'])
+    tmdb_movies['vote_total'] = tmdb_movies['vote_average'] * tmdb_movies['vote_count']
+    tmdb_movies.drop(['Unnamed: 0', 'genre_ids', 'original_language', 'popularity', 'vote_average'], inplace=True, axis=1)
+    clean_tmdb = tmdb_movies.groupby('title').sum()
+    clean_tmdb['vote_average'] = clean_tmdb['vote_total'] / clean_tmdb['vote_count']
+    return clean_tmdb
+
+
+def clean_tn_movie_budgets(tn_movie_budgets):
+    tn_movie_budgets = tn_movie_budgets.drop(columns = ['id'])
+    tn_movie_budgets['production_budget'] = tn_movie_budgets['production_budget'].str.replace('$','')
+    tn_movie_budgets['production_budget'] = tn_movie_budgets['production_budget'].str.replace(',','')
+    tn_movie_budgets['production_budget'] = tn_movie_budgets['production_budget'].astype('int64')
+    tn_movie_budgets['domestic_gross'] = tn_movie_budgets['domestic_gross'].str.replace('$','')
+    tn_movie_budgets['domestic_gross'] = tn_movie_budgets['domestic_gross'].str.replace(',','')
+    tn_movie_budgets['domestic_gross'] = tn_movie_budgets['domestic_gross'].astype('int64')
+    tn_movie_budgets['worldwide_gross'] = tn_movie_budgets['worldwide_gross'].str.replace('$','')
+    tn_movie_budgets['worldwide_gross'] = tn_movie_budgets['worldwide_gross'].str.replace(',','')
+    tn_movie_budgets['worldwide_gross'] = tn_movie_budgets['worldwide_gross'].astype('int64')
+    tn_movie_budgets['release_date'] = tn_movie_budgets['release_date'].str.replace(r'.*(\d{4})', r'\1').astype('int64')
+    return tn_movie_budgets.groupby(['movie', 'release_date']).sum().reset_index()
+    
+    
+def clean_rt_info(rt_info):
+    clean_rt_info = rt_info.drop(columns = ['dvd_date', 'currency'])
+    clean_rt_info['runtime'] = clean_rt_info['runtime'].str.replace(' minutes', '')
+    clean_rt_info['runtime'] = clean_rt_info['runtime'].astype(float)
+    clean_rt_info['genre'] = clean_rt_info['genre'].str.replace(' and ','|')
+    clean_rt_info['genre'] = clean_rt_info['genre'].str.replace('|',',')
+    clean_rt_info['genre'] = clean_rt_info['genre'].str.replace('Science Fiction','Sci-Fi')
+    clean_rt_info = clean_rt_info.dropna(subset=['genre','runtime','theater_date'])
+    return clean_rt_info
+
+
+def join_bom_tn_budgets(clean_bom, clean_tn_movie_budgets):
+    clean_bom.reset_index()
+    cb1 = clean_bom.set_index(['cleaned_title', 'year'])
+    ctn1 = clean_tn_movie_budgets.rename(columns={'movie': 'cleaned_title', 'release_date': 'year'})
+    ctn2 = ctn1.set_index(['cleaned_title', 'year'])
+    return cb1.join(ctn2, lsuffix='_bom', rsuffix='_tn', how='inner').reset_index().set_index('cleaned_title')
+
+
+def join_imdb(imdb_title_basics, imdb_title_crew, imdb_title_ratings):
+    join_imdb_tconst = imdb_title_basics.set_index('tconst').join(imdb_title_crew.set_index('tconst'), lsuffix="_basics", rsuffix="_crew", how ='inner')
+    join_imdb_tconst = join_imdb_tconst.join(imdb_title_ratings.set_index('tconst'), lsuffix="_join", rsuffix="_ratings", how ='inner')
+    join_imdb_tconst.set_index("primary_title", inplace=True)
+    return join_imdb_tconst
+    
+    
+def join_imdb_tconst_cleaned_data(join_imdb_tconst, cleaned_data):
+    jit1 = join_imdb_tconst.reset_index().rename(columns={'primary_title': 'cleaned_title', 'start_year': 'year'})
+    jit2 = jit1.set_index(['cleaned_title', 'year'])
+    cd1 = cleaned_data.reset_index().rename(columns={'index': 'cleaned_title'}).set_index(['cleaned_title', 'year'])
+    merged_data = cd1.join(jit2, how="inner")
+    merged_data.reset_index(inplace=True)
+    return merged_data
+
+
+def create_column(cleaned_data):
+    cleaned_data['profit'] = cleaned_data['worldwide_gross'] - cleaned_data['production_budget']
+    cleaned_data['ROI'] = cleaned_data['profit'] / cleaned_data['production_budget']
+    cleaned_data['profit_status'] = np.where(cleaned_data['ROI'] > 0, "Profit", "Non-Profit")
     return cleaned_data
+    
+# def clean_imdb_basic(imdb_name_basics):
+#     imdb_name_basics['pp'] = imdb_name_basics['primary_profession'].str.split(',')
+#     imdb_name_basics = name_basics.explode('pp')
+#     return imdb_name_basics
+
+    
