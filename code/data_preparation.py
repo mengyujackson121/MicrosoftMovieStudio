@@ -106,9 +106,3 @@ def create_column(cleaned_data):
     cleaned_data['profit_status'] = np.where(cleaned_data['ROI'] > 0, "Profit", "Non-Profit")
     return cleaned_data
     
-# def clean_imdb_basic(imdb_name_basics):
-#     imdb_name_basics['pp'] = imdb_name_basics['primary_profession'].str.split(',')
-#     imdb_name_basics = name_basics.explode('pp')
-#     return imdb_name_basics
-
-    
