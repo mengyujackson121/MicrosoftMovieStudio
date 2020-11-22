@@ -63,14 +63,15 @@ Evaluate how well your work solves the stated business problem.
 ***
 Questions to consider:
 * How do you interpret the results?
-* * We identified movie types that vastly outperform average movies on all key metrics, which is a great result for shaping studio policy.
+ * We identified movie types that vastly outperform average movies on all key metrics, which is a great result for shaping studio policy.
 * How well does your model fit your data? How much better is this than your baseline model?
-* * We don't have real "models" yet. Summary statistics indicate our recommendations should increase expected profit, ROI, and vote average beyond making generic movie.
+ * We don't have real "models" yet. Summary statistics indicate our recommendations should increase expected profit, ROI, and vote average beyond making generic movie.
 * How confident are you that your results would generalize beyond the data you have?
-* * Very confident.
+ * Very confident.
 * How confident are you that this model would benefit the business if put into use?
-* * Very confident.
+ * Very confident.
 ***
+
 
 ## Conclusions
 Provide your conclusions about the work you've done, including any limitations or next steps.
@@ -81,13 +82,13 @@ Questions to consider:
 ** Make a low-budget (for best ROI) or high budget (for best profit, best ratings, good ROI) movie, not a middle budget movie
 ** Make a movie that is either long or short, not medium length
 * Pick Genre that suits budget and length:
-* * Horror/Thriller for Low Budget/Short Movies
-* * Sci-Fi/Thriller for High Budget/Long Movies
+ * Horror/Thriller for Low Budget/Short Movies
+ * Sci-Fi/Thriller for High Budget/Long Movies
 * Intellectual Property seems important for successful High Budget/Long Movies
-* * We did not fully explore this relationship due to limited data about IP costs; would recommend obtaining this data and re-analyzing
-* * Acquire movie rights for comic book superheroes or popular books.
+ * We did not fully explore this relationship due to limited data about IP costs; would recommend obtaining this data and re-analyzing
+ * Acquire movie rights for comic book superheroes or popular books.
 * Further Research
-* * We can help analyze directors/writers/actors within a certain genre/budget/runtime once you make a decision!
+ * We can help analyze directors/writers/actors within a certain genre/budget/runtime once you make a decision!
 
 ***
 
