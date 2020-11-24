@@ -39,7 +39,22 @@ def number_movie_pie(cleaned_data, save_filename=None):
     plt.pie(x=number_of_movie, autopct="%.2f%%", labels=labels, pctdistance=0.5, textprops={'fontsize': 14})
     plt.title("Percent of Movie Which Are Profitable", fontsize=16, weight = 'bold');
     
+    
+def worldwide_gross_pie(cleaned_data):
+    is_profit = cleaned_data.groupby("profit_status")["worldwide_gross"].sum()
+    pie, ax = plt.subplots(figsize=[10,6])
+    labels = is_profit.keys()
+    plt.pie(x=is_profit, autopct="%.2f%%", labels=labels, pctdistance=0.5, textprops={'fontsize': 14})
+    plt.title("Percent of Profit/Non-Profit Movie Worldwide Gross", fontsize=16, weight = 'bold');
+    
+def production_budget_pie(cleaned_data):    
+    is_profit = cleaned_data.groupby("profit_status")["production_budget"].sum()
+    pie, ax = plt.subplots(figsize=[10,6])
+    labels = is_profit.keys()
+    plt.pie(x=is_profit, autopct="%.2f%%", labels=labels, pctdistance=0.5, textprops={'fontsize': 14})
+    plt.title("Percent of Profit/Non-Profit Movie Production Budget", fontsize=16, weight = 'bold');
 
+    
 def movies_profit(cleaned_data, save_filename=None):
     budget_no_profit_movies = cleaned_data[cleaned_data['ROI'] <= 0]['production_budget'].sum()
     budget_profit_movies = cleaned_data[cleaned_data['ROI'] > 0]['production_budget'].sum()
@@ -57,6 +72,8 @@ def movies_profit(cleaned_data, save_filename=None):
                        index=["production_budget", "worldwide_gross"],
                       columns=('no_profit_movies', 'profit_movies'))
     ax = foo2.plot.bar(stacked=True)
+    plt.xticks(rotation=90)
+
     if save_filename:
         ax.savefig(save_filename)
     
@@ -240,19 +257,22 @@ def calculate_average_roi(df):
 def calculate_average_roi_for_genre(df, genre):
     return calculate_average_roi(df[df["genres"].str.contains(genre)])
         
-def get_genre_counts_and_roi(df):
+def get_genre_counts_roi_and_profit(df):
     explodey_data = df.copy()
     explodey_data["genres"] = explodey_data["genres"].str.split(",")
     sploded_data = explodey_data.explode("genres")
     counts = sploded_data["genres"].value_counts()
     roi_by_genre = pd.Series(counts.index.map(functools.partial(calculate_average_roi_for_genre, df)),
                          index=counts.index)
-    return pd.concat({"count": counts, "ROI": roi_by_genre}, axis=1)
+    profit_by_genre_unordered = sploded_data.groupby("genres").sum()["profit"]
+    profit_by_genre = pd.Series(counts.index.map(lambda g: profit_by_genre_unordered[g]),
+                         index=counts.index)
+    return pd.concat({"count": counts, "ROI": roi_by_genre, "profit": profit_by_genre}, axis=1)
 
 
 
 def genre(movies):
-    counts_and_roi_by_genre = get_genre_counts_and_roi(movies)
+    counts_and_roi_by_genre = get_genre_counts_roi_and_profit(movies)
     count_fig, count_ax = plt.subplots()
     sns.barplot(x=counts_and_roi_by_genre.index, y=counts_and_roi_by_genre["count"], ax=count_ax)
     plt.xticks(rotation=30)
@@ -260,7 +280,12 @@ def genre(movies):
     roi_fig, roi_ax = plt.subplots()
     sns.barplot(x=counts_and_roi_by_genre.index, y=counts_and_roi_by_genre["ROI"], ax=roi_ax)
     plt.xticks(rotation=30)
-
+        
+    profit_fig, profit_ax = plt.subplots()
+    sns.barplot(x=counts_and_roi_by_genre.index, y=counts_and_roi_by_genre["profit"], ax=profit_ax)
+    plt.xticks(rotation=30)
     avg_roi = calculate_average_roi(movies)
+    profit_ax.axhline(avg_roi, ls='--')
     roi_ax.axhline(avg_roi, ls='--')
-    return count_ax, roi_ax, avg_roi,counts_and_roi_by_genre
+
+    return count_ax, roi_ax, profit_ax, avg_roi,counts_and_roi_by_genre
