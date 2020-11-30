@@ -33,6 +33,9 @@ sns.set_style("white")
 
 
 def number_movie_pie(cleaned_data, save_filename=None):
+    '''
+    Pie chart.
+    '''
     number_of_movie = cleaned_data.groupby("profit_status").size()
     pie, ax = plt.subplots(figsize=[10,6])
     labels = number_of_movie.keys()
@@ -41,13 +44,20 @@ def number_movie_pie(cleaned_data, save_filename=None):
     
     
 def worldwide_gross_pie(cleaned_data):
+    '''
+    Pie chart.
+    '''
     is_profit = cleaned_data.groupby("profit_status")["worldwide_gross"].sum()
     pie, ax = plt.subplots(figsize=[10,6])
     labels = is_profit.keys()
     plt.pie(x=is_profit, autopct="%.2f%%", labels=labels, pctdistance=0.5, textprops={'fontsize': 14})
     plt.title("Percent of Profit/Non-Profit Movie Worldwide Gross", fontsize=16, weight = 'bold');
     
+    
 def production_budget_pie(cleaned_data):    
+    '''
+    Pie chart.
+    '''
     is_profit = cleaned_data.groupby("profit_status")["production_budget"].sum()
     pie, ax = plt.subplots(figsize=[10,6])
     labels = is_profit.keys()
@@ -56,6 +66,9 @@ def production_budget_pie(cleaned_data):
 
     
 def movies_profit(cleaned_data, save_filename=None):
+    '''
+    Stack Bar chart.
+    '''
     budget_no_profit_movies = cleaned_data[cleaned_data['ROI'] <= 0]['production_budget'].sum()
     budget_profit_movies = cleaned_data[cleaned_data['ROI'] > 0]['production_budget'].sum()
     worldwide_no_profit_movies = cleaned_data[cleaned_data['ROI'] <= 0]['worldwide_gross'].sum()
@@ -79,6 +92,9 @@ def movies_profit(cleaned_data, save_filename=None):
     
     
 def vote(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression.
+    '''
     ax = sns.regplot(data=cleaned_data[cleaned_data["ROI"] < 100],
             x="vote_average", 
             y="ROI",
@@ -89,6 +105,9 @@ def vote(cleaned_data, save_filename=None):
     
     
 def runtime(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression.
+    '''
     ax = sns.regplot(data=cleaned_data[cleaned_data["ROI"] < 100],
             x="runtime_minutes", 
             y="ROI",
@@ -96,8 +115,12 @@ def runtime(cleaned_data, save_filename=None):
             line_kws = {'color':'black'})
     if save_filename:
         ax.savefig(save_filename)
+        
     
 def cost(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression.
+    '''
     sns.regplot(data=cleaned_data[cleaned_data["ROI"] < 100],
             x="runtime_minutes", 
             y="production_budget",
@@ -110,8 +133,12 @@ def cost(cleaned_data, save_filename=None):
             color="Red")
     if save_filename:
         ax.savefig(save_filename)
+        
     
 def budget_roi(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression.
+    '''
     ax = sns.regplot(data=cleaned_data[cleaned_data["ROI"] < 100],
             x="production_budget", 
             y="ROI",
@@ -122,6 +149,9 @@ def budget_roi(cleaned_data, save_filename=None):
         
         
 def roi_production_budget_scatter_20(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression, color base on profit status.
+    '''
     sns.regplot(data=cleaned_data[(cleaned_data["production_budget"] > cleaned_data['production_budget'].quantile(.2)) & 
                                   (cleaned_data["production_budget"] < cleaned_data['production_budget'].quantile(.6))],
                 scatter=False,
@@ -148,9 +178,13 @@ def roi_production_budget_scatter_20(cleaned_data, save_filename=None):
                 x_jitter=True,
                 color="red")
     if save_filename:
-        ax.savefig(save_filename)   
+        ax.savefig(save_filename)
+        
     
 def roi_production_budget_scatter_60(cleaned_data, save_filename=None):
+    '''
+    Scatter plot with regression, color base on profit status.
+    '''
     sns.regplot(data=cleaned_data[cleaned_data["production_budget"] > cleaned_data['production_budget'].quantile(.6)],
                 scatter=False,
                 x="production_budget", 
@@ -177,6 +211,9 @@ def roi_production_budget_scatter_60(cleaned_data, save_filename=None):
         
 
 def column_quantile_analysis(cleaned_data, column, num_quantiles=5, save_filename=None):
+    '''
+    Bar chart showing ROI and profit of each movie category, split by quantile of input column.
+    '''
     quantile_size = 100/num_quantiles
     binned_data = cleaned_data.copy()
     binned_data["bin"] = pd.qcut(binned_data[column], 
@@ -203,7 +240,9 @@ def column_quantile_analysis(cleaned_data, column, num_quantiles=5, save_filenam
 
 
 def column_quantile_analysis2(cleaned_data, column, num_quantiles=5, format_string=".1f", save_filename=None):
-    """Labels graph with values rather than quantiles. Looks messy for many value ranges"""
+    '''
+    Bar chart showing ROI and profit of each movie category, split by quantile of input column.
+    '''
     quantile_size = 1/num_quantiles
     binned_data = cleaned_data.copy()
     quantile_cutoffs= ['']
@@ -227,9 +266,13 @@ def column_quantile_analysis2(cleaned_data, column, num_quantiles=5, format_stri
     profit_ax.set_xlabel(f"{column}")
     if save_filename:
         roi_ax.savefig(save_filename + "roi")
-    return (bin_summary, roi_ax, profit_ax)                        
+    return (bin_summary, roi_ax, profit_ax)      
+
 
 def data_to_plot(cleaned_data, save_filename=None):
+    """
+    Box plot for studio ROI.
+    """
     data_to_plot = cleaned_data.copy()
     foo = data_to_plot['studio'].value_counts()
     data_to_plot["studio_num_movies"] = data_to_plot['studio'].map(foo)
@@ -242,8 +285,12 @@ def data_to_plot(cleaned_data, save_filename=None):
         boxplot.savefig(save_filename)
         
     return boxplot
+
     
 def profitability_movies(cleaned_data, save_filename=None):
+    '''
+    Hist chart.    
+    '''
     plt.hist(cleaned_data[cleaned_data['ROI'] < 20]['ROI'], bins=21, edgecolor='black')
     plt.xlabel('Return On Investment')
     plt.ylabel('Number of Movies')
@@ -251,13 +298,26 @@ def profitability_movies(cleaned_data, save_filename=None):
     plt.show()
 #     if save_filename:
 #         sns_plot.savefig(save_filename)
+
+
 def calculate_average_roi(df):
+    '''
+    Average ROI.
+    '''
     return df["profit"].sum() / df["production_budget"].sum()
 
+
 def calculate_average_roi_for_genre(df, genre):
+    """
+    Average ROI for genre.
+    """
     return calculate_average_roi(df[df["genres"].str.contains(genre)])
+
         
 def get_genre_counts_roi_and_profit(df):
+    """
+    Explode genre string and return statistics based on the genre.
+    """
     explodey_data = df.copy()
     explodey_data["genres"] = explodey_data["genres"].str.split(",")
     sploded_data = explodey_data.explode("genres")
@@ -270,8 +330,10 @@ def get_genre_counts_roi_and_profit(df):
     return pd.concat({"count": counts, "ROI": roi_by_genre, "profit": profit_by_genre}, axis=1)
 
 
-
 def genre(movies):
+    """
+    Bar chart for ROI and profit for each Genre. 
+    """
     counts_and_roi_by_genre = get_genre_counts_roi_and_profit(movies)
     count_fig, count_ax = plt.subplots()
     sns.barplot(x=counts_and_roi_by_genre.index, y=counts_and_roi_by_genre["count"], ax=count_ax)
